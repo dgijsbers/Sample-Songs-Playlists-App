@@ -14,6 +14,7 @@ from flask_migrate import Migrate, MigrateCommand # needs: pip/pip3 install flas
 from flask_mail import Mail, Message
 from threading import Thread
 from werkzeug import secure_filename
+from werkzeug.security import generate_password_hash, check_password_hash
 
 # Configure base directory of app
 basedir = os.path.abspath(os.path.dirname(__file__))
@@ -88,6 +89,33 @@ def send_email(to, subject, template, **kwargs): # kwargs = 'keyword arguments',
 
 # Set up association Table between artists and albums
 collections = db.Table('collections',db.Column('album_id',db.Integer, db.ForeignKey('albums.id')),db.Column('artist_id',db.Integer, db.ForeignKey('artists.id')))
+
+# Set up association Table between songs and playlists
+on_playlist = db.Table('on_playlist',db.Column('user_id', db.Integer, db.ForeignKey('users.id')),db.Column('playlist_id',db.Integer, db.ForeignKey('playlists.id')))
+
+class User(db.Model):
+    __tablename__ = "users"
+    id = db.Column(db.Integer, primary_key=True)
+    username = db.Column(db.String(255), unique=True)
+    playlists = db.relationship('Playlist', backref='User')
+    password_hash = db.Column(db.String(128))
+
+    @property
+    def password(self):
+        raise AttributeError('password is not a readable attribute')
+
+    @password.setter
+    def password(self, password):
+        self.password_hash = generate_password_hash(password)
+
+    def verify_password(self, password):
+        return check_password_hash(self.password_hash, password)
+
+class Playlist(db.Model):
+    __tablename__ = "playlists"
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey("users.id"))
+    songs = db.relationship('Song',secondary=on_playlist,backref=db.backref('playlists',lazy='dynamic'),lazy='dynamic')
 
 class Album(db.Model):
     __tablename__ = "albums"
