@@ -21,7 +21,6 @@ basedir = os.path.abspath(os.path.dirname(__file__))
 
 # Application configurations
 app = Flask(__name__)
-app.debug = True
 app.static_folder = 'static'
 app.config['SECRET_KEY'] = 'hardtoguessstringfromsi364thisisnotsupersecurebutitsok'
 # app.config['SQLALCHEMY_DATABASE_URI'] =\
@@ -41,6 +40,8 @@ app.config['MAIL_SUBJECT_PREFIX'] = '[Songs App]'
 app.config['MAIL_SENDER'] = 'Admin <youremail@example.com>' # TODO fill in email
 app.config['ADMIN'] = os.environ.get('ADMIN') or "Admin <youremail@example.com>"
 app.config['HEROKU_ON'] = os.environ.get('HEROKU')
+if not app.config['HEROKU_ON']:
+    app.debug = True
 
 
 # Set up Flask debug stuff
