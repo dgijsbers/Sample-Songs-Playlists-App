@@ -1,3 +1,8 @@
+{% if current_user.is_authenticated %}
+    <a href="{{ url_for('logout') }}">Sign Out {{current_user.username}}</a>
+{% else %}
+    <a href="{{ url_for('login') }}">Sign In</a>
+{% endif %}
 
 <div class="page-header">
     <h1>{% if num_songs %}{{ num_songs }}{% else %}0{% endif %} songs saved. </h1>
