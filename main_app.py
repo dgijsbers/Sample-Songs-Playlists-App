@@ -19,7 +19,6 @@ from werkzeug.security import generate_password_hash, check_password_hash
 # Imports for login management
 from flask_login import LoginManager, login_required, logout_user, login_user, UserMixin
 
-
 # Configure base directory of app
 basedir = os.path.abspath(os.path.dirname(__file__))
 
@@ -27,10 +26,9 @@ basedir = os.path.abspath(os.path.dirname(__file__))
 app = Flask(__name__)
 app.debug = True
 app.static_folder = 'static'
-app.config['SECRET_KEY'] = 'hardtoguessstringfromsi364thisisnotsupersecurebutitsok'
-# app.config['SQLALCHEMY_DATABASE_URI'] =\
-    # 'sqlite:///' + os.path.join(basedir, 'data.sqlite') # Determining where your database file will be stored, and what it will be called
-app.config["SQLALCHEMY_DATABASE_URI"] = "postgresql://localhost/songs_data" # TODO: decide what your new database name will be, and create it in postgresql, before running this new application (it's similar to an old one, but has some more to it)
+app.config['SECRET_KEY'] = 'hardtoguessstring'
+app.config["SQLALCHEMY_DATABASE_URI"] = "postgresql://localhost/songs_data" # TODO: decide what your new database name will be, and create it in postgresql, before running this new application
+# Lines for db setup so it will work as expected
 app.config['SQLALCHEMY_COMMIT_ON_TEARDOWN'] = True
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
@@ -42,22 +40,20 @@ app.config['MAIL_USERNAME'] = os.environ.get('MAIL_USERNAME') # TODO export to y
 app.config['MAIL_PASSWORD'] = os.environ.get('MAIL_PASSWORD')
 app.config['MAIL_SUBJECT_PREFIX'] = '[Songs App]'
 app.config['MAIL_SENDER'] = 'Admin <>' # TODO fill in email
-# app.config['ADMIN'] = os.environ.get('ADMIN')
+# app.config['ADMIN'] = os.environ.get('ADMIN') # If Admin in environ variable / in prod
 
-# Set up Flask debug stuff
+# Set up Flask debug and necessary additions to app
 manager = Manager(app)
-# moment = Moment(app) # For time # Later
 db = SQLAlchemy(app) # For database use
 migrate = Migrate(app, db) # For database use/updating
 manager.add_command('db', MigrateCommand) # Add migrate command to manager
 mail = Mail(app) # For email sending
 
-# Login configurations
+# Login configurations setup
 login_manager = LoginManager()
 login_manager.session_protection = 'strong'
 login_manager.login_view = 'login'
 login_manager.init_app(app) # set up login manager
-
 
 ## Set up Shell context so it's easy to use the shell to debug
 # Define function
@@ -66,14 +62,15 @@ def make_shell_context():
 # Add function use to manager
 manager.add_command("shell", Shell(make_context=make_shell_context))
 
-## You will get the following message when running command to create migration folder:
+## NOTE ON MIGRATION SETUP
+## You will get the following message when running command to create migration folder, e.g.:
 ## python main_app.py db init
 ## -->
 # Please edit configuration/connection/logging settings in ' ... migrations/alembic.ini' before proceeding
 ## This is what you are supposed to see!
 
 #########
-######### Everything above this line is important/useful setup, not problem-solving.
+######### Everything above this line is important/useful setup, not mostly application-specific problem-solving.
 #########
 
 ##### Functions to send email #####
