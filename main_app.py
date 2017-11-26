@@ -235,9 +235,16 @@ def internal_server_error(e):
     return render_template('500.html'), 500
 
 ## Login routes
-@app.route('/login')
+@app.route('/login',methods=["GET","POST"])
 def login():
-    return render_template('login.html')
+    form = LoginForm()
+    if form.validate_on_submit():
+        user = User.query.filter_by(email=form.email.data).first()
+        if user is not None and user.verify_password(form.password.data):
+            login_user(user, form.remember_me.data)
+            return redirect(request.args.get('next') or url_for('index'))
+        flash('Invalid username or password.')
+    return render_template('login.html',form=form)
 
 @app.route('/secret')
 @login_required
