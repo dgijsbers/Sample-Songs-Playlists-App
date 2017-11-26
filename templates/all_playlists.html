@@ -1,0 +1,15 @@
+{% if current_user.is_authenticated %}
+    <a href="{{ url_for('logout') }}">Sign Out <b>{{current_user.username}}</b></a>
+{% else %}
+    <a href="{{ url_for('login') }}">Sign In</a>
+{% endif %}
+
+<h1>{{ current_user.username }}'s Playlists</h1>
+
+<ul>
+{% for name_id in names_and_ids %}
+    <li>
+        <a href="http://localhost:5000/playlist/{{ name_id[1] }}">{{ name_id[0] }}</a>
+    </li>
+{% endfor %}
+</ul>

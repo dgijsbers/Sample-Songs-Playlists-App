@@ -4,7 +4,7 @@ import os
 from flask import Flask, render_template, session, redirect, request, url_for, flash
 from flask_script import Manager, Shell
 from flask_wtf import FlaskForm
-from wtforms import StringField, SubmitField, FileField, PasswordField, BooleanField
+from wtforms import StringField, SubmitField, FileField, PasswordField, BooleanField, SelectMultipleField
 from wtforms.validators import Required, Length, Email
 from flask_sqlalchemy import SQLAlchemy
 import random
@@ -17,7 +17,7 @@ from werkzeug import secure_filename
 from werkzeug.security import generate_password_hash, check_password_hash
 
 # Imports for login management
-from flask_login import LoginManager, login_required, logout_user, login_user, UserMixin
+from flask_login import LoginManager, login_required, logout_user, login_user, UserMixin, current_user
 
 # Configure base directory of app
 basedir = os.path.abspath(os.path.dirname(__file__))
@@ -58,7 +58,7 @@ login_manager.init_app(app) # set up login manager
 ## Set up Shell context so it's easy to use the shell to debug
 # Define function
 def make_shell_context():
-    return dict( app=app, db=db, Song=Song, Artist=Artist, Album=Album, User=User)
+    return dict( app=app, db=db, Song=Song, Artist=Artist, Album=Album, User=User,Playlist=Playlist)
 # Add function use to manager
 manager.add_command("shell", Shell(make_context=make_shell_context))
 
@@ -124,6 +124,7 @@ class User(UserMixin, db.Model):
 class Playlist(db.Model):
     __tablename__ = "playlists"
     id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(255))
     user_id = db.Column(db.Integer, db.ForeignKey("users.id"))
     songs = db.relationship('Song',secondary=on_playlist,backref=db.backref('playlists',lazy='dynamic'),lazy='dynamic')
 
@@ -170,6 +171,13 @@ class LoginForm(FlaskForm):
     remember_me = BooleanField('Keep me logged in')
     submit = SubmitField('Log In')
 
+class PlaylistCreateForm(FlaskForm):
+    songs = Song.query.all()
+    song_titles_val_descr = [(s.title,s.title) for s in songs]
+    name = StringField('Playlist Name',validators=[Required()])
+    song_picks = SelectMultipleField('Songs to include',choices=song_titles_val_descr)
+    submit = SubmitField("Create Playlist")
+
 
 class SongForm(FlaskForm):
     song = StringField("What is the title of your favorite song?", validators=[Required()])
@@ -186,6 +194,11 @@ class UploadForm(FlaskForm):
 ##### Helper functions
 
 ### For database additions / get_or_create functions
+
+def get_song_by_name(song_name):
+    """returns song or None"""
+    s = Song.query.filter_by(title=song_name).first()
+    return s
 
 def get_or_create_artist(db_session,artist_name):
     artist = db_session.query(Artist).filter_by(name=artist_name).first()
@@ -221,6 +234,18 @@ def get_or_create_song(db_session, song_title, song_artist, song_album, song_gen
         db_session.add(song)
         db_session.commit()
         return song
+
+def get_or_create_playlist(db_session, name,song_list,current_user):
+    playlist = db_session.query(Playlist).filter_by(name=name,user_id=current_user.id).first()
+    if playlist:
+        return playlist
+    else:
+        p = Playlist(name=name,user_id=current_user.id,songs=[])
+        for song in song_list:
+            p.songs.append(song)
+        db_session.add(p)
+        db_session.commit()
+        return p
 
 
 
@@ -275,8 +300,8 @@ def index():
         else:
             get_or_create_song(db.session,form.song.data, form.artist.data, form.album.data, form.genre.data)
             if app.config['ADMIN']:
-                send_email(app.config['ADMIN'], 'New Song',
-                           'mail/new_song', song=form.song.data)
+                #send_email(app.config['ADMIN'], 'New Song','mail/new_song', song=form.song.data)
+                flash("Email would be sent to {} if email secure server were set up".format(app.config['ADMIN']))
         return redirect(url_for('see_all'))
     return render_template('index.html', form=form,num_songs=num_songs)
 
@@ -294,6 +319,38 @@ def see_all_artists():
     artists = Artist.query.all()
     names = [(a.name, len(Song.query.filter_by(artist_id=a.id).all())) for a in artists]
     return render_template('all_artists.html',artist_names=names)
+
+@app.route('/playlists')
+@login_required
+def playlists(methods=["GET","POST"]):
+    lists = Playlist.query.filter_by(user_id=current_user.id)
+    names_and_ids = []
+    for lst in lists:
+        names_and_ids.append((lst.name,lst.id))
+    return render_template('all_playlists.html',names_and_ids=names_and_ids)
+
+@app.route('/playlist/<id>')
+def playlist(id):
+    p = Playlist.query.filter_by(id=id).first() # Note the .first() -- easy to forget what type the result of a query is!
+    name = p.name
+    songs = [s.title for s in p.songs]
+    return render_template('playlist.html',name=name,songs=songs)
+
+
+@app.route('/create_playlist',methods=["GET","POST"])
+@login_required
+def create_playlist():
+    form = PlaylistCreateForm()
+    if form.validate_on_submit():
+        song_titles = form.song_picks.data # list?
+        song_objects = [get_song_by_name(name) for name in song_titles] # list of Song objects from queries??
+        # import code; code.interact(local=dict(globals(), **locals()))
+        get_or_create_playlist(db.session,current_user=current_user,name=form.name.data,song_list=song_objects) # How to access user, here and elsewhere TODO
+        return redirect(url_for('playlists'))
+    return render_template('create_playlist.html',form=form)
+
+
+
 
 @app.route('/group1')
 def group1():

@@ -1,0 +1,8 @@
+<h1>Create New Playlist</h1>
+
+<form method="POST">
+	{{ form.hidden_tag() }}
+	{{ form.name.label }} {{ form.name() }}
+	{{ form.song_picks.label }} {{ form.song_picks() }}
+	{{ form.submit.label }}{{ form.submit() }}
+</form>
