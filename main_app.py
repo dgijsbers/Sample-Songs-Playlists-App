@@ -90,8 +90,6 @@ def send_email(to, subject, template, **kwargs): # kwargs = 'keyword arguments',
     # However, if your app sends a LOT of email, it'll be better to set up some additional "queuing" software libraries to handle it. But we don't need to do that yet. Not quite enough users!
 
 
-
-
 ##### Set up Models #####
 
 # Set up association Table between artists and albums
@@ -100,6 +98,7 @@ collections = db.Table('collections',db.Column('album_id',db.Integer, db.Foreign
 # Set up association Table between songs and playlists
 on_playlist = db.Table('on_playlist',db.Column('user_id', db.Integer, db.ForeignKey('songs.id')),db.Column('playlist_id',db.Integer, db.ForeignKey('playlists.id')))
 
+# Special model for users to log in
 class User(UserMixin, db.Model):
     __tablename__ = "users"
     id = db.Column(db.Integer, primary_key=True)
@@ -118,6 +117,9 @@ class User(UserMixin, db.Model):
 
     def verify_password(self, password):
         return check_password_hash(self.password_hash, password)
+
+
+# Other models
 
 class Playlist(db.Model):
     __tablename__ = "playlists"
