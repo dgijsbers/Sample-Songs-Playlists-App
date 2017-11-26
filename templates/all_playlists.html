@@ -7,9 +7,9 @@
 <h1>{{ current_user.username }}'s Playlists</h1>
 
 <ul>
-{% for name_id in names_and_ids %}
+{% for pl in names_urls %}
     <li>
-        <a href="http://localhost:5000/playlist/{{ name_id[1] }}">{{ name_id[0] }}</a>
+        <a href="{{ pl[1] }}">{{ pl[0] }}</a>
     </li>
 {% endfor %}
 </ul>

@@ -323,11 +323,9 @@ def see_all_artists():
 @app.route('/playlists')
 @login_required
 def playlists(methods=["GET","POST"]):
-    lists = Playlist.query.filter_by(user_id=current_user.id)
-    names_and_ids = []
-    for lst in lists:
-        names_and_ids.append((lst.name,lst.id))
-    return render_template('all_playlists.html',names_and_ids=names_and_ids)
+    lists = Playlist.query.filter_by(user_id=current_user.id).all()
+    names_urls = [(p.name, url_for('playlist',id=p.id)) for p in lists]
+    return render_template('all_playlists.html',names_urls=names_urls)
 
 @app.route('/playlist/<id>')
 def playlist(id):
