@@ -17,7 +17,7 @@ from werkzeug import secure_filename
 from werkzeug.security import generate_password_hash, check_password_hash
 
 # Login imports
-from flask.ext.login import LoginManager, login_required
+from flask.ext.login import LoginManager, login_required, logout_user
 
 
 # Configure base directory of app
@@ -245,6 +245,14 @@ def login():
             return redirect(request.args.get('next') or url_for('index'))
         flash('Invalid username or password.')
     return render_template('login.html',form=form)
+
+@app.route('/logout')
+@login_required
+def logout():
+    logout_user()
+    flash('You have been logged out')
+    return redirect(url_for('index'))
+
 
 @app.route('/secret')
 @login_required
