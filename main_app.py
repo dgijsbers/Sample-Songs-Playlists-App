@@ -212,7 +212,13 @@ def page_not_found(e):
 def internal_server_error(e):
     return render_template('500.html'), 500
 
-## Main route
+## Login routes
+@route('/login')
+def login():
+    return render_template('login.html')
+
+
+## Main routes
 
 @app.route('/', methods=['GET', 'POST'])
 def index():
