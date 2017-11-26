@@ -6,7 +6,7 @@ from flask_script import Manager, Shell
 # from flask_moment import Moment # requires pip/pip3 install flask_moment
 from flask_wtf import FlaskForm
 from wtforms import StringField, SubmitField, FileField
-from wtforms.validators import Required
+from wtforms.validators import Required, Length, Email
 from flask_sqlalchemy import SQLAlchemy
 import random
 from flask_migrate import Migrate, MigrateCommand # needs: pip/pip3 install flask-migrate
@@ -15,6 +15,10 @@ from flask_mail import Mail, Message
 from threading import Thread
 from werkzeug import secure_filename
 from werkzeug.security import generate_password_hash, check_password_hash
+
+# Login imports
+from flask.ext.login import LoginManager, login_required
+
 
 # Configure base directory of app
 basedir = os.path.abspath(os.path.dirname(__file__))
@@ -48,6 +52,10 @@ migrate = Migrate(app, db) # For database use/updating
 manager.add_command('db', MigrateCommand) # Add migrate command to manager
 mail = Mail(app) # For email sending
 
+# Login configurations
+login_manager = LoginManager()
+login_manager.session_protection = 'strong'
+login_manager.login_view = 'login'
 
 ## Set up Shell context so it's easy to use the shell to debug
 # Define function
@@ -96,7 +104,8 @@ on_playlist = db.Table('on_playlist',db.Column('user_id', db.Integer, db.Foreign
 class User(db.Model):
     __tablename__ = "users"
     id = db.Column(db.Integer, primary_key=True)
-    username = db.Column(db.String(255), unique=True)
+    username = db.Column(db.String(255), unique=True, index=True)
+    email = db.Column(db.String(64), unique=True, index=True)
     playlists = db.relationship('Playlist', backref='User')
     password_hash = db.Column(db.String(128))
 
@@ -144,7 +153,20 @@ class Song(db.Model):
     def __repr__(self):
         return "{} by {} | {}".format(self.title,self.artist_id, self.genre)
 
+## DB load functions
+@login_manager.user_loader
+def load_user(user_id):
+    return User.query.get(int(user_id)) # returns User object or None
+
+
 ##### Set up Forms #####
+
+class LoginForm(FlaskForm):
+    email = StringField('Email', validators=[Required(), Length(1,64), Email()])
+    password = PasswordField('Password', alidators=[Required()])
+    remember_me = BooleanField('Keep me logged in')
+    submit = SubmitField('Log In')
+
 
 class SongForm(FlaskForm):
     song = StringField("What is the title of your favorite song?", validators=[Required()])
@@ -213,10 +235,14 @@ def internal_server_error(e):
     return render_template('500.html'), 500
 
 ## Login routes
-@route('/login')
+@app.route('/login')
 def login():
     return render_template('login.html')
 
+@app.route('/secret')
+@login_required
+def secret():
+    return "Only authenticated users can do this! Try to log in or contact the site admin."
 
 ## Main routes
 
