@@ -40,7 +40,7 @@ app.config['MAIL_USERNAME'] = os.environ.get('MAIL_USERNAME') # TODO export to y
 app.config['MAIL_PASSWORD'] = os.environ.get('MAIL_PASSWORD')
 app.config['MAIL_SUBJECT_PREFIX'] = '[Songs App]'
 app.config['MAIL_SENDER'] = 'Admin <>' # TODO fill in email
-# app.config['ADMIN'] = os.environ.get('ADMIN') # If Admin in environ variable / in prod
+app.config['ADMIN'] = os.environ.get('ADMIN') or "admin@example.com" # If Admin in environ variable / in prod or this fake email
 
 # Set up Flask debug and necessary additions to app
 manager = Manager(app)
