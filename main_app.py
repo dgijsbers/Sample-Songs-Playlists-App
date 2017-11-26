@@ -1,11 +1,11 @@
 # An application about recording favorite songs & info
 
 import os
-from flask import Flask, render_template, session, redirect, url_for, flash
+from flask import Flask, render_template, session, redirect, request, url_for, flash
 from flask_script import Manager, Shell
 # from flask_moment import Moment # requires pip/pip3 install flask_moment
 from flask_wtf import FlaskForm
-from wtforms import StringField, SubmitField, FileField
+from wtforms import StringField, SubmitField, FileField, PasswordField, BooleanField
 from wtforms.validators import Required, Length, Email
 from flask_sqlalchemy import SQLAlchemy
 import random
@@ -17,7 +17,7 @@ from werkzeug import secure_filename
 from werkzeug.security import generate_password_hash, check_password_hash
 
 # Login imports
-from flask.ext.login import LoginManager, login_required, logout_user
+from flask_login import LoginManager, login_required, logout_user, login_user, UserMixin
 
 
 # Configure base directory of app
@@ -56,11 +56,13 @@ mail = Mail(app) # For email sending
 login_manager = LoginManager()
 login_manager.session_protection = 'strong'
 login_manager.login_view = 'login'
+login_manager.init_app(app) # set up login manager
+
 
 ## Set up Shell context so it's easy to use the shell to debug
 # Define function
 def make_shell_context():
-    return dict( app=app, db=db, Song=Song, Artist=Artist, Album=Album)
+    return dict( app=app, db=db, Song=Song, Artist=Artist, Album=Album, User=User)
 # Add function use to manager
 manager.add_command("shell", Shell(make_context=make_shell_context))
 
@@ -99,9 +101,9 @@ def send_email(to, subject, template, **kwargs): # kwargs = 'keyword arguments',
 collections = db.Table('collections',db.Column('album_id',db.Integer, db.ForeignKey('albums.id')),db.Column('artist_id',db.Integer, db.ForeignKey('artists.id')))
 
 # Set up association Table between songs and playlists
-on_playlist = db.Table('on_playlist',db.Column('user_id', db.Integer, db.ForeignKey('users.id')),db.Column('playlist_id',db.Integer, db.ForeignKey('playlists.id')))
+on_playlist = db.Table('on_playlist',db.Column('user_id', db.Integer, db.ForeignKey('songs.id')),db.Column('playlist_id',db.Integer, db.ForeignKey('playlists.id')))
 
-class User(db.Model):
+class User(UserMixin, db.Model):
     __tablename__ = "users"
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(255), unique=True, index=True)
@@ -144,11 +146,13 @@ class Artist(db.Model):
         return "{} (ID: {})".format(self.name,self.id)
 
 class Song(db.Model):
+    __tablename__ = "songs"
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(64),unique=True) # Only unique title songs
     album_id = db.Column(db.Integer, db.ForeignKey("albums.id"))
     artist_id = db.Column(db.Integer, db.ForeignKey("artists.id"))
     genre = db.Column(db.String(64))
+
 
     def __repr__(self):
         return "{} by {} | {}".format(self.title,self.artist_id, self.genre)
@@ -163,7 +167,7 @@ def load_user(user_id):
 
 class LoginForm(FlaskForm):
     email = StringField('Email', validators=[Required(), Length(1,64), Email()])
-    password = PasswordField('Password', alidators=[Required()])
+    password = PasswordField('Password', validators=[Required()])
     remember_me = BooleanField('Keep me logged in')
     submit = SubmitField('Log In')
 
