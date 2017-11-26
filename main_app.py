@@ -3,20 +3,20 @@
 import os
 from flask import Flask, render_template, session, redirect, request, url_for, flash
 from flask_script import Manager, Shell
-# from flask_moment import Moment # requires pip/pip3 install flask_moment
 from flask_wtf import FlaskForm
 from wtforms import StringField, SubmitField, FileField, PasswordField, BooleanField
 from wtforms.validators import Required, Length, Email
 from flask_sqlalchemy import SQLAlchemy
 import random
-from flask_migrate import Migrate, MigrateCommand # needs: pip/pip3 install flask-migrate
+from flask_migrate import Migrate, MigrateCommand
 
+# Imports for email from app
 from flask_mail import Mail, Message
 from threading import Thread
 from werkzeug import secure_filename
 from werkzeug.security import generate_password_hash, check_password_hash
 
-# Login imports
+# Imports for login management
 from flask_login import LoginManager, login_required, logout_user, login_user, UserMixin
 
 
