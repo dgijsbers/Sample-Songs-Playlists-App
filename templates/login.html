@@ -1,3 +1,8 @@
 <h1>Login</h1>
 
-{{ wtf.quick_form(form) }}
+<form method="POST">
+	{{ form.hidden_tag() }}
+	{{ form.email.label }} {{ form.email() }}
+	{{ form.password.label }} {{ form.password() }}
+	{{ form.submit.label }}{{ form.submit() }}
+</form>
