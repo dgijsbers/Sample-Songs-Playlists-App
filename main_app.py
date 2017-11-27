@@ -5,8 +5,8 @@ import os
 from flask import Flask, render_template, session, redirect, request, url_for, flash
 from flask_script import Manager, Shell
 from flask_wtf import FlaskForm
-from wtforms import StringField, SubmitField, FileField, PasswordField, BooleanField, SelectMultipleField
-from wtforms.validators import Required, Length, Email
+from wtforms import StringField, SubmitField, FileField, PasswordField, BooleanField, SelectMultipleField, ValidationError
+from wtforms.validators import Required, Length, Email, Regexp, EqualTo
 from flask_sqlalchemy import SQLAlchemy
 import random
 from flask_migrate import Migrate, MigrateCommand
@@ -165,6 +165,22 @@ def load_user(user_id):
 
 ##### Set up Forms #####
 
+class RegistrationForm(FlaskForm):
+    email = StringField('Email:', validators=[Required(),Length(1,64),Email()])
+    username = StringField('Username:',validators=[Required(),Length(1,64),Regexp('^[A-Za-z][A-Za-z0-9_.]*$',0,'Usernames must have only letters, numbers, dots or underscores')])
+    password = PasswordField('Password:',validators=[Required(),EqualTo('password2',message="Passwords must match")])
+    password2 = PasswordField("Confirm Password:",validators=[Required()])
+    submit = SubmitField('Register User')
+
+    #Additional checking methods for the form
+    def validate_email(self,field):
+        if User.query.filter_by(email=field.data).first():
+            raise ValidationError('Email already registered.')
+
+    def validate_username(self,field):
+        if User.query.filter_by(username=field.data).first():
+            raise ValidationError('Username already taken')
+
 class LoginForm(FlaskForm):
     email = StringField('Email', validators=[Required(), Length(1,64), Email()])
     password = PasswordField('Password', validators=[Required()])
@@ -281,6 +297,18 @@ def logout():
     flash('You have been logged out')
     return redirect(url_for('index'))
 
+@app.route('/register',methods=["GET","POST"])
+def register():
+    form = RegistrationForm()
+    if form.validate_on_submit():
+        user = User(email=form.email.data,username=form.username.data,password=form.password.data)
+        db.session.add(user)
+        db.session.commit()
+        flash('You can now log in!')
+        return redirect(url_for('login'))
+    return render_template('register.html',form=form)
+
+
 
 @app.route('/secret')
 @login_required
@@ -391,6 +419,7 @@ def upload():
         return redirect(url_for('upload'))
 
     return render_template('upload.html', form=form)
+
 # ...static/imgs/whatevername.jpg
 # .../static/imgs/yosemite.jpg
 @app.route('/viewimage')
