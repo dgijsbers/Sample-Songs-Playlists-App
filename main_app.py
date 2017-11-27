@@ -27,7 +27,7 @@ basedir = os.path.abspath(os.path.dirname(__file__))
 app = Flask(__name__)
 app.static_folder = 'static'
 app.config['SECRET_KEY'] = 'hardtoguessstring'
-app.config["SQLALCHEMY_DATABASE_URI"] = "postgresql://localhost/songs_data" # TODO: decide what your new database name will be, and create it in postgresql, before running this new application
+app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get('DATABASE_URL') or "postgresql://localhost/songs_data"  # TODO: decide what your new database name will be, and create it in postgresql, before running this new application
 # Lines for db setup so it will work as expected
 app.config['SQLALCHEMY_COMMIT_ON_TEARDOWN'] = True
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
@@ -41,6 +41,7 @@ app.config['MAIL_PASSWORD'] = os.environ.get('MAIL_PASSWORD')
 app.config['MAIL_SUBJECT_PREFIX'] = '[Songs App]'
 app.config['MAIL_SENDER'] = 'Admin <>' # TODO fill in email
 app.config['ADMIN'] = os.environ.get('ADMIN') or "admin@example.com" # If Admin in environ variable / in prod or this fake email
+app.config['HEROKU_ON'] = os.environ.get('HEROKU')
 
 # Set up Flask debug and necessary additions to app
 manager = Manager(app)
