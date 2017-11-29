@@ -15,7 +15,7 @@ from flask_migrate import Migrate, MigrateCommand
 from flask_mail import Mail, Message
 from threading import Thread
 from werkzeug import secure_filename
-from werkzeug.security import _password_hash, check_password_hash
+from werkzeug.security import generate_password_hash, check_password_hash
 
 # Imports for login management
 from flask_login import LoginManager, login_required, logout_user, login_user, UserMixin, current_user
@@ -59,7 +59,7 @@ login_manager.init_app(app) # set up login manager
 ## Set up Shell context so it's easy to use the shell to debug
 # Define function
 def make_shell_context():
-    return dict( app=app, db=db, Song=Song, Artist=Artist, Album=Album, User=User,Playlist=Playlist)
+    return dict( app=app, db=db) #Song=Song, Artist=Artist, Album=Album, User=User,Playlist=Playlist)
 # Add function use to manager
 manager.add_command("shell", Shell(make_context=make_shell_context))
 
@@ -158,7 +158,7 @@ class Song(db.Model):
     def __repr__(self):
         return "{} by {} | {}".format(self.title,self.artist_id, self.genre)
 
-## DB load functions
+# ## DB load functions
 @login_manager.user_loader
 def load_user(user_id):
     return User.query.get(int(user_id)) # returns User object or None
@@ -441,4 +441,4 @@ def all_images():
 if __name__ == '__main__':
     db.create_all()
     manager.run() # NEW: run with this: python main_app.py runserver
-    # Also provides more tools for debugging
+#     # Also provides more tools for debugging
