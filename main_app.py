@@ -15,7 +15,7 @@ from flask_migrate import Migrate, MigrateCommand
 from flask_mail import Mail, Message
 from threading import Thread
 from werkzeug import secure_filename
-from werkzeug.security import generate_password_hash, check_password_hash
+from werkzeug.security import _password_hash, check_password_hash
 
 # Imports for login management
 from flask_login import LoginManager, login_required, logout_user, login_user, UserMixin, current_user
@@ -27,7 +27,7 @@ basedir = os.path.abspath(os.path.dirname(__file__))
 app = Flask(__name__)
 app.static_folder = 'static'
 app.config['SECRET_KEY'] = 'hardtoguessstring'
-app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get('DATABASE_URL') or "postgresql://localhost/songs_data"  # TODO: decide what your new database name will be, and create it in postgresql, before running this new application
+app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get('DATABASE_URL') or "postgresql://localhost/songs_and_playlists"  # TODO: decide what your new database name will be, and create it in postgresql, before running this new application
 # Lines for db setup so it will work as expected
 app.config['SQLALCHEMY_COMMIT_ON_TEARDOWN'] = True
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
